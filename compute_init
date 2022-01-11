@@ -1,0 +1,25 @@
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="==MYBOUNDARY=="
+
+--==MYBOUNDARY==
+Content-Type: text/cloud-config; charset="us-ascii"
+
+write_files:
+- encoding: b64
+  content: ${node_exporter_service}
+  owner: root:root
+  path: /etc/systemd/system/prometheusNode.service
+  permissions: '0644'
+# Sets the GOPATH & downloads the demo payload
+runcmd:
+## Node Exporter
+- curl https://github.com/prometheus/node_exporter/releases/download/v${node_exporter_version}/node_exporter-${node_exporter_version}.linux-amd64.tar.gz -L --output node_exporter-${node_exporter_version}.linux-amd64.tar.gz
+- tar xvf node_exporter-${node_exporter_version}.linux-amd64.tar.gz
+- sudo mv node_exporter-${node_exporter_version}.linux-amd64/node_exporter /usr/local/bin/
+- sudo rm -R node_exporter-${node_exporter_version}.linux-amd64
+- sudo rm node_exporter-${node_exporter_version}.linux-amd64.tar.gz
+- sudo systemctl start prometheusNode.service
+- sudo systemctl enable prometheusNode.service
+## run cadvisor
+- sudo docker run --volume=/:/rootfs:ro --volume=/var/run:/var/run:ro --volume=/sys:/sys:ro --volume=/var/lib/docker/:/var/lib/docker:ro --volume=/dev/disk/:/dev/disk:ro --publish=8080:8080 --detach=true --name=cadvisor --privileged --device=/dev/kmsg --restart always --label=PROMETHEUS_EXPORTER_PORT=8080 --label=PROMETHEUS_EXPORTER_JOB_NAME=prometheus-ecs-discovery gcr.io/cadvisor/cadvisor:${cadvisor_version}
+--==MYBOUNDARY==--

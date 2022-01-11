@@ -1,0 +1,42 @@
+global:
+  scrape_interval: 15s # Set the scrape interval to every 15 seconds. Default is every 1 minute.
+  evaluation_interval: 15s # Evaluate rules every 15 seconds. The default is every 1 minute.
+  external_labels:
+    cluster: "prd-eu-1"
+
+scrape_configs:
+  - job_name: "ec2"
+    relabel_configs:
+      - source_labels: [__meta_ec2_tag_Name]
+        target_label: instance
+      - source_labels: [__meta_ec2_private_ip]
+        target_label: ip
+      - source_labels: [__meta_ec2_tag_aws_autoscaling_groupName]
+        target_label: autoscaling_group
+      - source_labels: [__meta_ec2_tag_env]
+        target_label: env
+      - source_labels: [__meta_ec2_tag_team]
+        target_label: team
+    ec2_sd_configs:
+      - region: eu-central-1
+        port: 9100
+        refresh_interval: 60s
+  - job_name: "ec2_batch"
+    relabel_configs:
+      - source_labels: [__meta_ec2_tag_Name]
+        target_label: instance
+      - source_labels: [__meta_ec2_private_ip]
+        target_label: ip
+      - source_labels: [__meta_ec2_tag_aws_autoscaling_groupName]
+        target_label: autoscaling_group
+      - source_labels: [__meta_ec2_tag_env]
+        target_label: env
+      - source_labels: [__meta_ec2_tag_team]
+        target_label: team
+    ec2_sd_configs:
+      - region: eu-central-1
+        port: 8080
+        refresh_interval: 60s
+        filters:
+          - name: tag:Function
+            values: ["Batch"]
